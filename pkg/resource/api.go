@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 )
 
@@ -150,6 +151,15 @@ func (a *APIPatchingApplicator) Apply(ctx context.Context, o client.Object, ao .
 
 	// TODO(negz): Allow callers to override the kind of patch used.
 	return errors.Wrap(a.client.Patch(ctx, o, &patch{desired}), "cannot patch object")
+}
+
+// WithMergeOptions returns an ApplyOption for merging the value at the given
+// fieldPath of desired object onto the current object with
+// the given merge options.
+func WithMergeOptions(fieldPath string, mergeOptions *fieldpath.MergeOptions) ApplyOption {
+	return func(_ context.Context, current, desired runtime.Object) error {
+		return fieldpath.MergeReplace(fieldPath, current, desired, mergeOptions)
+	}
 }
 
 type patch struct{ from runtime.Object }
